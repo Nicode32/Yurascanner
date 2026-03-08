@@ -1,9 +1,9 @@
 const https = require('https');
 
 class GeminiBridge {
-    constructor(apiKey, model = 'chat-bison-001') {
+    constructor(apiKey, model = 'gemini-2.5-flash') {
         this.apiKey = apiKey;
-        this.model = model;
+        this.model = (model.includes('bison') || model.includes('1.5')) ? 'gemini-2.5-flash' : model;
     }
 
     async requestApi(messages) {
@@ -17,17 +17,21 @@ class GeminiBridge {
     }
 
     _callGenerate(prompt) {
-        // Use chat-style messages expected by chat-bison
         const body = JSON.stringify({
-            messages: [
-                { author: 'user', content: { text: prompt } }
+            contents: [
+                {
+                    role: "user",
+                    parts: [{ text: prompt }]
+                }
             ],
-            temperature: 0.2
+            generationConfig: {
+                temperature: 0.2
+            }
         });
 
         const options = {
             hostname: 'generativelanguage.googleapis.com',
-            path: `/v1beta2/models/${this.model}:generate?key=${this.apiKey}`,
+            path: `/v1beta/models/${this.model}:generateContent?key=${this.apiKey}`,
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -40,24 +44,21 @@ class GeminiBridge {
                 let data = '';
                 res.on('data', (chunk) => (data += chunk));
                 res.on('end', () => {
+                    if (res.statusCode !== 200) {
+                        return reject(new Error(`API Error ${res.statusCode}: ${data}`));
+                    }
+                    
                     try {
                         const parsed = JSON.parse(data);
-                        // Try common response shapes
                         if (parsed.candidates && parsed.candidates.length > 0) {
                             const cand = parsed.candidates[0];
-                            if (cand.content && cand.content.length > 0 && cand.content[0].text) {
-                                return resolve(cand.content[0].text);
+                            if (cand.content && cand.content.parts && cand.content.parts.length > 0) {
+                                return resolve(cand.content.parts[0].text);
                             }
-                            if (cand.output) return resolve(cand.output);
-                            if (cand.message && cand.message.content && cand.message.content.text) return resolve(cand.message.content.text);
                         }
-                        if (parsed.output && parsed.output[0] && parsed.output[0].content && parsed.output[0].content[0] && parsed.output[0].content[0].text) {
-                            return resolve(parsed.output[0].content[0].text);
-                        }
-                        // Fallback to stringified response
                         resolve(JSON.stringify(parsed));
                     } catch (e) {
-                        reject(e);
+                        reject(new Error(`Failed to parse JSON. Raw response: ${data}`));
                     }
                 });
             });

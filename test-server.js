@@ -40,5 +40,5 @@ const server = http.createServer((req, res) => {
   res.end('Not found');
 });
 
-const PORT = 3000;
+const PORT = 8080;
 server.listen(PORT, () => console.log(`Test server listening on http://localhost:${PORT}/admin/`));

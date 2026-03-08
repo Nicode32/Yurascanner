@@ -26,7 +26,10 @@ class LLMBridge {
         // Create chat-histories directory
         let chatHistoryDir = path.resolve(__dirname, '../../output/chat-histories');
         fs.mkdirSync(chatHistoryDir, { recursive: true });
-        this.chatHistoryFilepath = path.join(chatHistoryDir, `[${id}] ${new Date().toISOString()}.md`);
+        
+        // Fix for Windows: Replace colons in the ISO string with dashes so the file can be created
+        let safeDateString = new Date().toISOString().replace(/:/g, '-');
+        this.chatHistoryFilepath = path.join(chatHistoryDir, `[${id}] ${safeDateString}.md`);
 
         // gpt-3.5-turbo is used as the default model, but can be changed via command-line parameters
         this.model = 'gpt-3.5-turbo';

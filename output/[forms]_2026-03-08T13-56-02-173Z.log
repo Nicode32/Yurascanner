@@ -1,0 +1,1 @@
+00:00:05;2;2;{"id":"","name":"","action":"/admin/","method":"post","elemNames":["","password","username"],"containingUrl":"http://localhost:8080/admin/","xpath":"/html/body/form","trace":["h","t","t","p",":","/","/","l","o","c","a","l","h","o","s","t",":","8","0","8","0","/","a","d","m","i","n","/"]}
